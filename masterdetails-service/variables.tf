@@ -16,3 +16,11 @@ variable "github_branch" {
 variable "region" {
   type = string
 }
+
+variable "vpc_name" {
+  type = string
+}
+
+variable "subnet_num" {
+  type = number
+}

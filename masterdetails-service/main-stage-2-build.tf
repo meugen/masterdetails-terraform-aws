@@ -21,7 +21,7 @@ resource "aws_cloudwatch_log_stream" "log_stream" {
   name = local.log_stream
 }
 
-data "aws_iam_policy_document" "assume_role" {
+data "aws_iam_policy_document" "assume_build_role" {
   statement {
     effect = "Allow"
 
@@ -34,12 +34,12 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-resource "aws_iam_role" "masterdetails_role" {
-  name = local.role_name
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+resource "aws_iam_role" "masterdetails_build_role" {
+  name = local.build_role_name
+  assume_role_policy = data.aws_iam_policy_document.assume_build_role.json
 }
 
-data "aws_iam_policy_document" "masterdetails_role" {
+data "aws_iam_policy_document" "masterdetails_build_role" {
   statement {
     effect = "Allow"
 
@@ -96,21 +96,21 @@ data "aws_iam_policy_document" "masterdetails_role" {
   }
 }
 
-resource "aws_iam_role_policy" "masterdetails_policy" {
-  role = aws_iam_role.masterdetails_role.name
-  policy = data.aws_iam_policy_document.masterdetails_role.json
+resource "aws_iam_role_policy" "masterdetails_build_policy" {
+  role = aws_iam_role.masterdetails_build_role.name
+  policy = data.aws_iam_policy_document.masterdetails_build_role.json
 }
 
-resource "time_sleep" "wait_10s" {
-  depends_on = [aws_iam_role_policy.masterdetails_policy]
+resource "time_sleep" "build_wait_10s" {
+  depends_on = [aws_iam_role_policy.masterdetails_build_policy]
   create_duration = "10s"
 }
 
 resource "aws_codebuild_project" "project" {
-  depends_on = [time_sleep.wait_10s]
+  depends_on = [time_sleep.build_wait_10s]
 
   name = local.project_name
-  service_role = aws_iam_role.masterdetails_role.arn
+  service_role = aws_iam_role.masterdetails_build_role.arn
 
   source {
     type = "GITHUB"

@@ -1,3 +1,3 @@
-output "project" {
-  value       = aws_codebuild_project.project
+output "service_url" {
+  value = aws_apprunner_service.service.service_url
 }
