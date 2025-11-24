@@ -38,6 +38,40 @@ resource "aws_vpc_security_group_ingress_rule" "sg_https_ingress_rule" {
   to_port = 443
 }
 
+# resource "aws_security_group" "sg_https_egress" {
+#   vpc_id = data.aws_vpc.vpc.id
+#   name = "${local.project_name}-sg-https-egress"
+#   description = "Egress security group for HTTPS"
+#
+#   tags = {
+#     Name = "${local.project_name}-sg-https-egress"
+#   }
+# }
+#
+# resource "aws_vpc_security_group_egress_rule" "sg_https_egress_rule" {
+#   ip_protocol       = "tcp"
+#   security_group_id = aws_security_group.sg_https_egress.id
+#   cidr_ipv4 = "0.0.0.0/0"
+#   from_port = 443
+#   to_port = 443
+# }
+#
+# resource "aws_vpc_security_group_egress_rule" "sg_tcp_dns_egress_rule" {
+#   ip_protocol       = "tcp"
+#   security_group_id = aws_security_group.sg_https_egress.id
+#   cidr_ipv4 = "0.0.0.0/0"
+#   from_port = 53
+#   to_port = 53
+# }
+#
+# resource "aws_vpc_security_group_egress_rule" "sg_udp_dns_egress_rule" {
+#   ip_protocol       = "udp"
+#   security_group_id = aws_security_group.sg_https_egress.id
+#   cidr_ipv4 = "0.0.0.0/0"
+#   from_port = 53
+#   to_port = 53
+# }
+
 resource "aws_security_group" "sg_postgres_ingress" {
   vpc_id = data.aws_vpc.vpc.id
   name = "${local.project_name}-sg-postgres-ingress"
@@ -140,7 +174,10 @@ data "aws_iam_policy_document" "assume_deploy_role" {
 
     principals {
       type        = "Service"
-      identifiers = ["tasks.apprunner.amazonaws.com"]
+      identifiers = [
+        "build.apprunner.amazonaws.com",
+        "tasks.apprunner.amazonaws.com"
+      ]
     }
 
     actions = ["sts:AssumeRole"]
@@ -196,9 +233,9 @@ resource "aws_iam_role_policy" "masterdetails_deploy_policy" {
   policy = data.aws_iam_policy_document.masterdetails_deploy_role.json
 }
 
-resource "time_sleep" "deploy_wait_5s" {
+resource "time_sleep" "deploy_wait_10s" {
   depends_on = [aws_iam_role_policy.masterdetails_deploy_policy]
-  create_duration = "5s"
+  create_duration = "10s"
 }
 
 resource "aws_elasticache_serverless_cache" "cache" {
@@ -250,7 +287,7 @@ resource "aws_apprunner_auto_scaling_configuration_version" "auto_scaling" {
 }
 
 resource "aws_apprunner_service" "service" {
-  depends_on = [time_sleep.deploy_wait_5s]
+  depends_on = [time_sleep.deploy_wait_10s]
 
   service_name = local.service_name
   auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.auto_scaling.arn
