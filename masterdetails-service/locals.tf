@@ -10,5 +10,6 @@ locals {
   apprunner_vpc_name = "${local.project_name}-apprunner-vpc-connector"
   db_name = "${local.project_name}-db"
   cache_name = "${local.project_name}-cache"
-  newbits = 4
+  auto_scaling_name = "${local.project_name}-auto-scaling"
+  newbits = 8
 }

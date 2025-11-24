@@ -15,3 +15,15 @@ variable "subnet_num" {
   default = 1
   description = "Number in VPC's subnet where masterdetails app should be placed"
 }
+
+variable "docker_io_username" {
+  type = string
+  default = "meugen"
+  description = "Username for login to Docker Hub during build stage"
+}
+
+variable "docker_io_secret" {
+  type = string
+  default = ""
+  description = "Secret with token for login to Docker Hub during build stage. Leave empty to skip"
+}

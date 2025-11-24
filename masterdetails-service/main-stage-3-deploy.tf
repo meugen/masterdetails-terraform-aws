@@ -237,10 +237,23 @@ resource "aws_apprunner_vpc_connector" "apprunner_vpc" {
   }
 }
 
+resource "aws_apprunner_auto_scaling_configuration_version" "auto_scaling" {
+  auto_scaling_configuration_name = local.auto_scaling_name
+
+  max_concurrency = 50
+  max_size = 10
+  min_size = 2
+
+  tags = {
+    Name = local.auto_scaling_name
+  }
+}
+
 resource "aws_apprunner_service" "service" {
   depends_on = [time_sleep.deploy_wait_5s]
 
   service_name = local.service_name
+  auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.auto_scaling.arn
 
   source_configuration {
     authentication_configuration {

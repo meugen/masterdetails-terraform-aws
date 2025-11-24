@@ -60,7 +60,8 @@ data "aws_iam_policy_document" "masterdetails_build_role" {
     effect = "Allow"
 
     actions = [
-      "ecr:GetAuthorizationToken"
+      "ecr:GetAuthorizationToken",
+      "secretsmanager:GetSecretValue"
     ]
 
     resources = ["*"]
@@ -118,7 +119,9 @@ resource "aws_codebuild_project" "project" {
     buildspec = templatefile("${path.module}/buildspec.yml.tftpl", {
       region = var.region,
       registry_id = aws_ecr_repository.repo.registry_id,
-      repository_url = aws_ecr_repository.repo.repository_url
+      repository_url = aws_ecr_repository.repo.repository_url,
+      docker_io_username = var.docker_io_username
+      docker_io_secret = var.docker_io_secret
     })
 
     auth {
@@ -163,7 +166,7 @@ action "aws_codebuild_start_build" "build" {
 }
 
 resource "terraform_data" "build_trigger" {
-  input = "trigger-build"
+  depends_on = [aws_codebuild_project.project]
 
   lifecycle {
     action_trigger {

@@ -24,3 +24,11 @@ variable "vpc_name" {
 variable "subnet_num" {
   type = number
 }
+
+variable docker_io_username {
+  type = string
+}
+
+variable docker_io_secret {
+  type = string
+}

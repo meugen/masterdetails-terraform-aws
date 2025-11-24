@@ -1,10 +1,25 @@
 version: 0.2
 
+env:
+  variables:
+    DOCKER_IO_USERNAME: ${docker_io_username}
+%{ if docker_io_secret != "" }
+  secrets-manager:
+    DOCKER_IO_PASSWORD: ${docker_io_secret}
+%{ endif }
+
 phases:
   pre_build:
     commands:
       - echo Entered the pre_build phase...
       - aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${registry_id}.dkr.ecr.${region}.amazonaws.com
+      - |
+        if [ "$DOCKER_IO_PASSWORD" != "" ]; then
+          echo Logging into docker.io...
+          echo $DOCKER_IO_PASSWORD | docker login --username $DOCKER_IO_USERNAME --password-stdin
+        else
+          echo Skipped login to docker.io
+        fi
   build:
     commands:
       - echo Entered the build phase...
