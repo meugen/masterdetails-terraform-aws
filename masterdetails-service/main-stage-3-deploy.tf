@@ -153,6 +153,25 @@ resource "aws_db_subnet_group" "subnet_group" {
   }
 }
 
+ephemeral "aws_secretsmanager_random_password" "password" {
+  password_length = 20
+  require_each_included_type = true
+}
+
+resource "aws_secretsmanager_secret" "secret" {
+  name = local.db_secret_name
+
+  tags = {
+    Name = local.db_secret_name
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "secret_version" {
+  secret_id = aws_secretsmanager_secret.secret.id
+  secret_string_wo = ephemeral.aws_secretsmanager_random_password.password.random_password
+  secret_string_wo_version = 1
+}
+
 resource "aws_db_instance" "db" {
   instance_class = "db.m5.large"
   engine = "postgres"
@@ -160,8 +179,9 @@ resource "aws_db_instance" "db" {
   identifier = local.db_name
   db_name = "masterdetails"
   db_subnet_group_name = aws_db_subnet_group.subnet_group.name
-  manage_master_user_password = true
   username = "masterdetails"
+  password_wo = ephemeral.aws_secretsmanager_random_password.password.random_password
+  password_wo_version = 1
   vpc_security_group_ids = [aws_security_group.sg_postgres_ingress.id]
   skip_final_snapshot = true
   allocated_storage = 10
@@ -223,7 +243,7 @@ data "aws_iam_policy_document" "masterdetails_deploy_role" {
     ]
 
     resources = [
-      aws_db_instance.db.master_user_secret[0].secret_arn
+      aws_secretsmanager_secret.secret.arn
     ]
   }
 }
@@ -304,7 +324,7 @@ resource "aws_apprunner_service" "service" {
         port = "8080"
 
         runtime_environment_secrets = {
-          PGSQL_PASSWORD = aws_db_instance.db.master_user_secret[0].secret_arn
+          PGSQL_PASSWORD = aws_secretsmanager_secret.secret.arn
         }
 
         runtime_environment_variables = {
