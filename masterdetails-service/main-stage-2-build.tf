@@ -161,7 +161,7 @@ resource "aws_codebuild_project" "project" {
 action "aws_codebuild_start_build" "build" {
   config {
     project_name = aws_codebuild_project.project.name
-    source_version = "feature/debug"
+    source_version = var.github_branch
   }
 }
 
