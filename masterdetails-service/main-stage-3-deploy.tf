@@ -41,7 +41,7 @@ resource "aws_vpc_security_group_ingress_rule" "sg_https_ingress_rule" {
 resource "aws_vpc_security_group_ingress_rule" "sg_http_ingress_rule" {
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_https_ingress.id
-  cidr_ipv4 = "0.0.0.0/0"
+  cidr_ipv4 = data.aws_vpc.vpc.cidr_block
   from_port = 8080
   to_port = 8080
 }
@@ -134,8 +134,12 @@ ephemeral "aws_secretsmanager_random_password" "password" {
   include_space = false
 }
 
+resource "terraform_data" "secret_uuid" {
+  input = uuid()
+}
+
 resource "aws_secretsmanager_secret" "secret" {
-  name = "${local.db_secret_name}-${uuid()}"
+  name = "${local.db_secret_name}-${terraform_data.secret_uuid.output}"
 
   tags = {
     Name = local.db_secret_name
@@ -157,7 +161,7 @@ resource "aws_db_instance" "db" {
   db_subnet_group_name = aws_db_subnet_group.subnet_group.name
   username = "masterdetails"
   password_wo = ephemeral.aws_secretsmanager_random_password.password.random_password
-  password_wo_version = 2
+  password_wo_version = 4
   vpc_security_group_ids = [aws_security_group.sg_postgres_ingress.id]
   skip_final_snapshot = true
   allocated_storage = 10
@@ -273,9 +277,9 @@ resource "aws_apprunner_vpc_connector" "apprunner_vpc" {
 resource "aws_apprunner_auto_scaling_configuration_version" "auto_scaling" {
   auto_scaling_configuration_name = local.auto_scaling_name
 
-  max_concurrency = 50
-  max_size = 10
-  min_size = 2
+  max_concurrency = 100
+  max_size = 4
+  min_size = 1
 
   tags = {
     Name = local.auto_scaling_name
@@ -308,6 +312,7 @@ resource "aws_apprunner_service" "service" {
           PGSQL_USERNAME = aws_db_instance.db.username
           REDIS_HOSTNAME = aws_elasticache_serverless_cache.cache.endpoint[0].address
           REDIS_PORT = aws_elasticache_serverless_cache.cache.endpoint[0].port
+          REDIS_USE_SSL = true
         }
       }
     }
