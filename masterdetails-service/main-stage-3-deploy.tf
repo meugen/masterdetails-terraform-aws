@@ -38,39 +38,13 @@ resource "aws_vpc_security_group_ingress_rule" "sg_https_ingress_rule" {
   to_port = 443
 }
 
-# resource "aws_security_group" "sg_https_egress" {
-#   vpc_id = data.aws_vpc.vpc.id
-#   name = "${local.project_name}-sg-https-egress"
-#   description = "Egress security group for HTTPS"
-#
-#   tags = {
-#     Name = "${local.project_name}-sg-https-egress"
-#   }
-# }
-#
-# resource "aws_vpc_security_group_egress_rule" "sg_https_egress_rule" {
-#   ip_protocol       = "tcp"
-#   security_group_id = aws_security_group.sg_https_egress.id
-#   cidr_ipv4 = "0.0.0.0/0"
-#   from_port = 443
-#   to_port = 443
-# }
-#
-# resource "aws_vpc_security_group_egress_rule" "sg_tcp_dns_egress_rule" {
-#   ip_protocol       = "tcp"
-#   security_group_id = aws_security_group.sg_https_egress.id
-#   cidr_ipv4 = "0.0.0.0/0"
-#   from_port = 53
-#   to_port = 53
-# }
-#
-# resource "aws_vpc_security_group_egress_rule" "sg_udp_dns_egress_rule" {
-#   ip_protocol       = "udp"
-#   security_group_id = aws_security_group.sg_https_egress.id
-#   cidr_ipv4 = "0.0.0.0/0"
-#   from_port = 53
-#   to_port = 53
-# }
+resource "aws_vpc_security_group_ingress_rule" "sg_http_ingress_rule" {
+  ip_protocol       = "tcp"
+  security_group_id = aws_security_group.sg_https_ingress.id
+  cidr_ipv4 = "0.0.0.0/0"
+  from_port = 8080
+  to_port = 8080
+}
 
 resource "aws_security_group" "sg_postgres_ingress" {
   vpc_id = data.aws_vpc.vpc.id
@@ -156,10 +130,12 @@ resource "aws_db_subnet_group" "subnet_group" {
 ephemeral "aws_secretsmanager_random_password" "password" {
   password_length = 20
   require_each_included_type = true
+  exclude_punctuation = true
+  include_space = false
 }
 
 resource "aws_secretsmanager_secret" "secret" {
-  name = local.db_secret_name
+  name = "${local.db_secret_name}-${uuid()}"
 
   tags = {
     Name = local.db_secret_name
@@ -169,7 +145,7 @@ resource "aws_secretsmanager_secret" "secret" {
 resource "aws_secretsmanager_secret_version" "secret_version" {
   secret_id = aws_secretsmanager_secret.secret.id
   secret_string_wo = ephemeral.aws_secretsmanager_random_password.password.random_password
-  secret_string_wo_version = 1
+  secret_string_wo_version = 2
 }
 
 resource "aws_db_instance" "db" {
@@ -181,7 +157,7 @@ resource "aws_db_instance" "db" {
   db_subnet_group_name = aws_db_subnet_group.subnet_group.name
   username = "masterdetails"
   password_wo = ephemeral.aws_secretsmanager_random_password.password.random_password
-  password_wo_version = 1
+  password_wo_version = 2
   vpc_security_group_ids = [aws_security_group.sg_postgres_ingress.id]
   skip_final_snapshot = true
   allocated_storage = 10
