@@ -1,15 +1,15 @@
 variable "github_conn" {
-  type = string
+  type    = string
   default = "github-connection"
 }
 
 variable "github_repo" {
-  type = string
+  type    = string
   default = "meugen/masterdetails-service"
 }
 
 variable "github_branch" {
-  type = string
+  type    = string
   default = "main"
 }
 
@@ -25,10 +25,10 @@ variable "subnet_num" {
   type = number
 }
 
-variable docker_io_username {
+variable "docker_io_username" {
   type = string
 }
 
-variable docker_io_secret {
+variable "docker_io_secret" {
   type = string
 }
