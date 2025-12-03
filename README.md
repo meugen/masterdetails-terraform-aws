@@ -17,7 +17,7 @@
 * Docker
 * Docker Compose
 * Terraform
-* AWS
+* AWS / AWS SDK
 
 ### Can be tested at [masterdetails](https://9dp5zjmu4q.eu-central-1.awsapprunner.com/)
 
