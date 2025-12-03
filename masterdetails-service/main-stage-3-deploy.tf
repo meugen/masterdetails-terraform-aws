@@ -44,7 +44,7 @@ resource "aws_security_group" "sg_private_https_ingress" {
   description = "Ingress security group for HTTPS"
 
   tags = {
-    Name = "${local.project_name}-sg-https-ingress"
+    Name = "${local.project_name}-sg-private-https-ingress"
   }
 }
 
