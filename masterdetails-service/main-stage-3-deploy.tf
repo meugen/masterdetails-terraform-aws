@@ -202,6 +202,10 @@ resource "aws_db_subnet_group" "subnet_group" {
   }
 }
 
+resource "terraform_data" "db_snapshot_uuid" {
+  input = uuid()
+}
+
 resource "aws_db_instance" "db" {
   instance_class              = "db.t3.micro"
   engine                      = "postgres"
@@ -214,9 +218,9 @@ resource "aws_db_instance" "db" {
   manage_master_user_password = true
   vpc_security_group_ids      = [aws_security_group.sg_postgres_ingress.id]
   skip_final_snapshot         = false
-  final_snapshot_identifier   = "${local.db_name}-snapshot"
-  allocated_storage           = 10
-  max_allocated_storage       = 100
+  final_snapshot_identifier   = "${local.db_name}-snapshot-${terraform_data.db_snapshot_uuid.output}"
+  allocated_storage           = 1
+  max_allocated_storage       = 10
 }
 
 data "aws_iam_policy_document" "assume_deploy_role" {
