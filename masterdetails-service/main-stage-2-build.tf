@@ -1,7 +1,7 @@
 resource "aws_ecr_repository" "repo" {
-  name = var.github_repo
+  name                 = var.github_repo
   image_tag_mutability = "MUTABLE"
-  force_delete = true
+  force_delete         = true
 
   tags = {
     Service = "masterdetails"
@@ -18,7 +18,7 @@ resource "aws_cloudwatch_log_group" "log_group" {
 
 resource "aws_cloudwatch_log_stream" "log_stream" {
   log_group_name = aws_cloudwatch_log_group.log_group.name
-  name = local.log_stream
+  name           = local.log_stream
 }
 
 data "aws_iam_policy_document" "assume_build_role" {
@@ -35,7 +35,7 @@ data "aws_iam_policy_document" "assume_build_role" {
 }
 
 resource "aws_iam_role" "masterdetails_build_role" {
-  name = local.build_role_name
+  name               = local.build_role_name
   assume_role_policy = data.aws_iam_policy_document.assume_build_role.json
 }
 
@@ -98,34 +98,34 @@ data "aws_iam_policy_document" "masterdetails_build_role" {
 }
 
 resource "aws_iam_role_policy" "masterdetails_build_policy" {
-  role = aws_iam_role.masterdetails_build_role.name
+  role   = aws_iam_role.masterdetails_build_role.name
   policy = data.aws_iam_policy_document.masterdetails_build_role.json
 }
 
 resource "time_sleep" "build_wait_10s" {
-  depends_on = [aws_iam_role_policy.masterdetails_build_policy]
+  depends_on      = [aws_iam_role_policy.masterdetails_build_policy]
   create_duration = "10s"
 }
 
 resource "aws_codebuild_project" "project" {
   depends_on = [time_sleep.build_wait_10s]
 
-  name = local.project_name
+  name         = local.project_name
   service_role = aws_iam_role.masterdetails_build_role.arn
 
   source {
-    type = "GITHUB"
+    type     = "GITHUB"
     location = "https://github.com/${var.github_repo}"
     buildspec = templatefile("${path.module}/buildspec.yml.tftpl", {
-      region = var.region,
-      registry_id = aws_ecr_repository.repo.registry_id,
-      repository_url = aws_ecr_repository.repo.repository_url,
+      region             = var.region,
+      registry_id        = aws_ecr_repository.repo.registry_id,
+      repository_url     = aws_ecr_repository.repo.repository_url,
       docker_io_username = var.docker_io_username
-      docker_io_secret = var.docker_io_secret
+      docker_io_secret   = var.docker_io_secret
     })
 
     auth {
-      type = "CODECONNECTIONS"
+      type     = "CODECONNECTIONS"
       resource = data.aws_codestarconnections_connection.connection.arn
     }
   }
@@ -137,14 +137,14 @@ resource "aws_codebuild_project" "project" {
 
   environment {
     compute_type = "BUILD_GENERAL1_MEDIUM"
-    image = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
-    type = "LINUX_CONTAINER"
+    image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+    type         = "LINUX_CONTAINER"
   }
 
   logs_config {
     cloudwatch_logs {
-      status = "ENABLED"
-      group_name = aws_cloudwatch_log_group.log_group.name
+      status      = "ENABLED"
+      group_name  = aws_cloudwatch_log_group.log_group.name
       stream_name = aws_cloudwatch_log_stream.log_stream.name
     }
     s3_logs {
@@ -153,14 +153,14 @@ resource "aws_codebuild_project" "project" {
   }
 
   cache {
-    type = "LOCAL"
+    type  = "LOCAL"
     modes = ["LOCAL_DOCKER_LAYER_CACHE"]
   }
 }
 
 action "aws_codebuild_start_build" "build" {
   config {
-    project_name = aws_codebuild_project.project.name
+    project_name   = aws_codebuild_project.project.name
     source_version = var.github_branch
   }
 }

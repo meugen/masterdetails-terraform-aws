@@ -11,8 +11,8 @@ data "aws_availability_zones" "az_list" {
 resource "aws_subnet" "subnets" {
   count = length(data.aws_availability_zones.az_list.names)
 
-  vpc_id = data.aws_vpc.vpc.id
-  cidr_block = cidrsubnet(data.aws_vpc.vpc.cidr_block, local.newbits, var.subnet_num + count.index)
+  vpc_id            = data.aws_vpc.vpc.id
+  cidr_block        = cidrsubnet(data.aws_vpc.vpc.cidr_block, local.newbits, var.subnet_num + count.index)
   availability_zone = data.aws_availability_zones.az_list.names[count.index]
 
   tags = {
@@ -21,8 +21,8 @@ resource "aws_subnet" "subnets" {
 }
 
 resource "aws_security_group" "sg_https_ingress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-https-ingress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-https-ingress"
   description = "Ingress security group for HTTPS"
 
   tags = {
@@ -33,14 +33,14 @@ resource "aws_security_group" "sg_https_ingress" {
 resource "aws_vpc_security_group_ingress_rule" "sg_https_ingress_rule" {
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_https_ingress.id
-  cidr_ipv4 = "0.0.0.0/0"
-  from_port = 443
-  to_port = 443
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  to_port           = 443
 }
 
 resource "aws_security_group" "sg_private_https_ingress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-private-https-ingress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-private-https-ingress"
   description = "Ingress security group for HTTPS"
 
   tags = {
@@ -53,14 +53,14 @@ resource "aws_vpc_security_group_ingress_rule" "sg_private_https_ingress_rule" {
 
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_private_https_ingress.id
-  cidr_ipv4 = each.value
-  from_port = 443
-  to_port = 443
+  cidr_ipv4         = each.value
+  from_port         = 443
+  to_port           = 443
 }
 
 resource "aws_security_group" "sg_http_ingress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-http-ingress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-http-ingress"
   description = "Ingress security group for HTTP"
 
   tags = {
@@ -73,14 +73,14 @@ resource "aws_vpc_security_group_ingress_rule" "sg_http_ingress_rule" {
 
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_http_ingress.id
-  cidr_ipv4 = each.value
-  from_port = 8080
-  to_port = 8080
+  cidr_ipv4         = each.value
+  from_port         = 8080
+  to_port           = 8080
 }
 
 resource "aws_security_group" "sg_https_egress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-https-egress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-https-egress"
   description = "Egress security group for HTTPS"
 
   tags = {
@@ -93,14 +93,14 @@ resource "aws_vpc_security_group_egress_rule" "sg_https_egress_rule" {
 
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_https_egress.id
-  cidr_ipv4 = each.value
-  from_port = 443
-  to_port = 443
+  cidr_ipv4         = each.value
+  from_port         = 443
+  to_port           = 443
 }
 
 resource "aws_security_group" "sg_postgres_ingress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-postgres-ingress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-postgres-ingress"
   description = "Ingress security group for PostgreSQL"
 
   tags = {
@@ -113,14 +113,14 @@ resource "aws_vpc_security_group_ingress_rule" "sg_postgres_ingress_rule" {
 
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_postgres_ingress.id
-  cidr_ipv4 = each.value
-  from_port = 5432
-  to_port = 5432
+  cidr_ipv4         = each.value
+  from_port         = 5432
+  to_port           = 5432
 }
 
 resource "aws_security_group" "sg_postgres_egress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-postgres-egress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-postgres-egress"
   description = "Egress security group for PostgreSQL"
 
   tags = {
@@ -133,14 +133,14 @@ resource "aws_vpc_security_group_egress_rule" "sg_postgres_egress_rule" {
 
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_postgres_egress.id
-  cidr_ipv4 = each.value
-  from_port = 5432
-  to_port = 5432
+  cidr_ipv4         = each.value
+  from_port         = 5432
+  to_port           = 5432
 }
 
 resource "aws_security_group" "sg_redis_ingress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-redis-ingress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-redis-ingress"
   description = "Ingress security group for Redis"
 
   tags = {
@@ -153,14 +153,14 @@ resource "aws_vpc_security_group_ingress_rule" "sg_redis_ingress_rule" {
 
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_redis_ingress.id
-  cidr_ipv4 = each.value
-  from_port = 6379
-  to_port = 6379
+  cidr_ipv4         = each.value
+  from_port         = 6379
+  to_port           = 6379
 }
 
 resource "aws_security_group" "sg_redis_egress" {
-  vpc_id = data.aws_vpc.vpc.id
-  name = "${local.project_name}-sg-redis-egress"
+  vpc_id      = data.aws_vpc.vpc.id
+  name        = "${local.project_name}-sg-redis-egress"
   description = "Egress security group for Redis"
 
   tags = {
@@ -173,19 +173,19 @@ resource "aws_vpc_security_group_egress_rule" "sg_redis_egress_rule" {
 
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_redis_egress.id
-  cidr_ipv4 = each.value
-  from_port = 6379
-  to_port = 6379
+  cidr_ipv4         = each.value
+  from_port         = 6379
+  to_port           = 6379
 }
 
 resource "aws_vpc_endpoint" "secretsmanager_endpoint" {
-  vpc_id = data.aws_vpc.vpc.id
+  vpc_id            = data.aws_vpc.vpc.id
   vpc_endpoint_type = "Interface"
-  subnet_ids = aws_subnet.subnets[*].id
+  subnet_ids        = aws_subnet.subnets[*].id
   security_group_ids = [
     aws_security_group.sg_private_https_ingress.id
   ]
-  service_name = "com.amazonaws.${var.region}.secretsmanager"
+  service_name        = "com.amazonaws.${var.region}.secretsmanager"
   private_dns_enabled = true
 
   tags = {
@@ -194,7 +194,7 @@ resource "aws_vpc_endpoint" "secretsmanager_endpoint" {
 }
 
 resource "aws_db_subnet_group" "subnet_group" {
-  name = local.subnet_group_name
+  name       = local.subnet_group_name
   subnet_ids = aws_subnet.subnets[*].id
 
   tags = {
@@ -203,20 +203,20 @@ resource "aws_db_subnet_group" "subnet_group" {
 }
 
 resource "aws_db_instance" "db" {
-  instance_class = "db.t3.micro"
-  engine = "postgres"
-  engine_version = "17.6"
-  identifier = local.db_name
-  multi_az = false
-  db_name = "masterdetails"
-  db_subnet_group_name = aws_db_subnet_group.subnet_group.name
-  username = "masterdetails"
+  instance_class              = "db.t3.micro"
+  engine                      = "postgres"
+  engine_version              = "17.6"
+  identifier                  = local.db_name
+  multi_az                    = false
+  db_name                     = "masterdetails"
+  db_subnet_group_name        = aws_db_subnet_group.subnet_group.name
+  username                    = "masterdetails"
   manage_master_user_password = true
-  vpc_security_group_ids = [aws_security_group.sg_postgres_ingress.id]
-  skip_final_snapshot = false
-  final_snapshot_identifier = "${local.db_name}-snapshot"
-  allocated_storage = 10
-  max_allocated_storage = 100
+  vpc_security_group_ids      = [aws_security_group.sg_postgres_ingress.id]
+  skip_final_snapshot         = false
+  final_snapshot_identifier   = "${local.db_name}-snapshot"
+  allocated_storage           = 10
+  max_allocated_storage       = 100
 }
 
 data "aws_iam_policy_document" "assume_deploy_role" {
@@ -224,7 +224,7 @@ data "aws_iam_policy_document" "assume_deploy_role" {
     effect = "Allow"
 
     principals {
-      type        = "Service"
+      type = "Service"
       identifiers = [
         "build.apprunner.amazonaws.com",
         "tasks.apprunner.amazonaws.com"
@@ -236,7 +236,7 @@ data "aws_iam_policy_document" "assume_deploy_role" {
 }
 
 resource "aws_iam_role" "masterdetails_deploy_role" {
-  name = local.deploy_role_name
+  name               = local.deploy_role_name
   assume_role_policy = data.aws_iam_policy_document.assume_deploy_role.json
 }
 
@@ -280,12 +280,12 @@ data "aws_iam_policy_document" "masterdetails_deploy_role" {
 }
 
 resource "aws_iam_role_policy" "masterdetails_deploy_policy" {
-  role = aws_iam_role.masterdetails_deploy_role.name
+  role   = aws_iam_role.masterdetails_deploy_role.name
   policy = data.aws_iam_policy_document.masterdetails_deploy_role.json
 }
 
 resource "time_sleep" "deploy_wait_10s" {
-  depends_on = [aws_iam_role_policy.masterdetails_deploy_policy]
+  depends_on      = [aws_iam_role_policy.masterdetails_deploy_policy]
   create_duration = "10s"
 }
 
@@ -296,7 +296,7 @@ resource "aws_elasticache_serverless_cache" "cache" {
   cache_usage_limits {
     data_storage {
       maximum = 10
-      unit = "GB"
+      unit    = "GB"
     }
     ecpu_per_second {
       maximum = 5000
@@ -304,7 +304,7 @@ resource "aws_elasticache_serverless_cache" "cache" {
   }
 
   security_group_ids = [aws_security_group.sg_redis_ingress.id]
-  subnet_ids = aws_subnet.subnets[*].id
+  subnet_ids         = aws_subnet.subnets[*].id
 
   tags = {
     Name = local.cache_name
@@ -319,7 +319,7 @@ resource "aws_apprunner_vpc_connector" "apprunner_vpc" {
     aws_security_group.sg_postgres_egress.id,
     aws_security_group.sg_redis_egress.id
   ]
-  subnets = aws_subnet.subnets[*].id
+  subnets            = aws_subnet.subnets[*].id
   vpc_connector_name = local.apprunner_vpc_name
 
   tags = {
@@ -331,8 +331,8 @@ resource "aws_apprunner_auto_scaling_configuration_version" "auto_scaling" {
   auto_scaling_configuration_name = local.auto_scaling_name
 
   max_concurrency = 100
-  max_size = 4
-  min_size = 1
+  max_size        = 4
+  min_size        = 1
 
   tags = {
     Name = local.auto_scaling_name
@@ -345,7 +345,7 @@ resource "aws_apprunner_service" "service" {
     aws_vpc_endpoint.secretsmanager_endpoint
   ]
 
-  service_name = local.service_name
+  service_name                   = local.service_name
   auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.auto_scaling.arn
 
   source_configuration {
@@ -353,7 +353,7 @@ resource "aws_apprunner_service" "service" {
       access_role_arn = aws_iam_role.masterdetails_deploy_role.arn
     }
     image_repository {
-      image_identifier = "${aws_ecr_repository.repo.repository_url}:latest"
+      image_identifier      = "${aws_ecr_repository.repo.repository_url}:latest"
       image_repository_type = "ECR"
 
       image_configuration {
@@ -361,12 +361,12 @@ resource "aws_apprunner_service" "service" {
 
         runtime_environment_variables = {
           AWS_PGSQL_SECRET = aws_db_instance.db.master_user_secret[0].secret_arn
-          PGSQL_HOSTNAME = aws_db_instance.db.address
-          PGSQL_PORT = aws_db_instance.db.port
-          PGSQL_DATABASE = aws_db_instance.db.db_name
-          REDIS_HOSTNAME = aws_elasticache_serverless_cache.cache.endpoint[0].address
-          REDIS_PORT = aws_elasticache_serverless_cache.cache.endpoint[0].port
-          REDIS_USE_SSL = true
+          PGSQL_HOSTNAME   = aws_db_instance.db.address
+          PGSQL_PORT       = aws_db_instance.db.port
+          PGSQL_DATABASE   = aws_db_instance.db.db_name
+          REDIS_HOSTNAME   = aws_elasticache_serverless_cache.cache.endpoint[0].address
+          REDIS_PORT       = aws_elasticache_serverless_cache.cache.endpoint[0].port
+          REDIS_USE_SSL    = true
         }
       }
     }
@@ -378,13 +378,13 @@ resource "aws_apprunner_service" "service" {
       is_publicly_accessible = true
     }
     egress_configuration {
-      egress_type = "VPC"
+      egress_type       = "VPC"
       vpc_connector_arn = aws_apprunner_vpc_connector.apprunner_vpc.arn
     }
   }
 
   health_check_configuration {
-    path = "/actuator/health"
+    path     = "/actuator/health"
     protocol = "HTTP"
   }
 
