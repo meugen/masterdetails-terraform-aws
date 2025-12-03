@@ -11,6 +11,6 @@ locals {
   db_name = "${local.project_name}-db"
   cache_name = "${local.project_name}-cache"
   auto_scaling_name = "${local.project_name}-auto-scaling"
-  db_secret_name = "${local.project_name}-db-secret"
+  secreatsmanager_endpoint_name = "${local.project_name}-secretsmanager-endpoint"
   newbits = 8
 }

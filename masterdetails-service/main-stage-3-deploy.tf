@@ -38,12 +38,64 @@ resource "aws_vpc_security_group_ingress_rule" "sg_https_ingress_rule" {
   to_port = 443
 }
 
-resource "aws_vpc_security_group_ingress_rule" "sg_http_ingress_rule" {
+resource "aws_security_group" "sg_private_https_ingress" {
+  vpc_id = data.aws_vpc.vpc.id
+  name = "${local.project_name}-sg-private-https-ingress"
+  description = "Ingress security group for HTTPS"
+
+  tags = {
+    Name = "${local.project_name}-sg-https-ingress"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "sg_private_https_ingress_rule" {
+  for_each = toset(aws_subnet.subnets[*].cidr_block)
+
   ip_protocol       = "tcp"
-  security_group_id = aws_security_group.sg_https_ingress.id
-  cidr_ipv4 = data.aws_vpc.vpc.cidr_block
+  security_group_id = aws_security_group.sg_private_https_ingress.id
+  cidr_ipv4 = each.value
+  from_port = 443
+  to_port = 443
+}
+
+resource "aws_security_group" "sg_http_ingress" {
+  vpc_id = data.aws_vpc.vpc.id
+  name = "${local.project_name}-sg-http-ingress"
+  description = "Ingress security group for HTTP"
+
+  tags = {
+    Name = "${local.project_name}-sg-http-ingress"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "sg_http_ingress_rule" {
+  for_each = toset(aws_subnet.subnets[*].cidr_block)
+
+  ip_protocol       = "tcp"
+  security_group_id = aws_security_group.sg_http_ingress.id
+  cidr_ipv4 = each.value
   from_port = 8080
   to_port = 8080
+}
+
+resource "aws_security_group" "sg_https_egress" {
+  vpc_id = data.aws_vpc.vpc.id
+  name = "${local.project_name}-sg-https-egress"
+  description = "Egress security group for HTTPS"
+
+  tags = {
+    Name = "${local.project_name}-sg-https-egress"
+  }
+}
+
+resource "aws_vpc_security_group_egress_rule" "sg_https_egress_rule" {
+  for_each = toset(aws_subnet.subnets[*].cidr_block)
+
+  ip_protocol       = "tcp"
+  security_group_id = aws_security_group.sg_https_egress.id
+  cidr_ipv4 = each.value
+  from_port = 443
+  to_port = 443
 }
 
 resource "aws_security_group" "sg_postgres_ingress" {
@@ -57,9 +109,11 @@ resource "aws_security_group" "sg_postgres_ingress" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "sg_postgres_ingress_rule" {
+  for_each = toset(aws_subnet.subnets[*].cidr_block)
+
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_postgres_ingress.id
-  cidr_ipv4 = data.aws_vpc.vpc.cidr_block
+  cidr_ipv4 = each.value
   from_port = 5432
   to_port = 5432
 }
@@ -75,9 +129,11 @@ resource "aws_security_group" "sg_postgres_egress" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "sg_postgres_egress_rule" {
+  for_each = toset(aws_subnet.subnets[*].cidr_block)
+
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_postgres_egress.id
-  cidr_ipv4 = data.aws_vpc.vpc.cidr_block
+  cidr_ipv4 = each.value
   from_port = 5432
   to_port = 5432
 }
@@ -93,9 +149,11 @@ resource "aws_security_group" "sg_redis_ingress" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "sg_redis_ingress_rule" {
+  for_each = toset(aws_subnet.subnets[*].cidr_block)
+
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_redis_ingress.id
-  cidr_ipv4 = data.aws_vpc.vpc.cidr_block
+  cidr_ipv4 = each.value
   from_port = 6379
   to_port = 6379
 }
@@ -111,11 +169,28 @@ resource "aws_security_group" "sg_redis_egress" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "sg_redis_egress_rule" {
+  for_each = toset(aws_subnet.subnets[*].cidr_block)
+
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_redis_egress.id
-  cidr_ipv4 = data.aws_vpc.vpc.cidr_block
+  cidr_ipv4 = each.value
   from_port = 6379
   to_port = 6379
+}
+
+resource "aws_vpc_endpoint" "secretsmanager_endpoint" {
+  vpc_id = data.aws_vpc.vpc.id
+  vpc_endpoint_type = "Interface"
+  subnet_ids = aws_subnet.subnets[*].id
+  security_group_ids = [
+    aws_security_group.sg_private_https_ingress.id
+  ]
+  service_name = "com.amazonaws.${var.region}.secretsmanager"
+  private_dns_enabled = true
+
+  tags = {
+    Name = local.secreatsmanager_endpoint_name
+  }
 }
 
 resource "aws_db_subnet_group" "subnet_group" {
@@ -127,43 +202,19 @@ resource "aws_db_subnet_group" "subnet_group" {
   }
 }
 
-ephemeral "aws_secretsmanager_random_password" "password" {
-  password_length = 20
-  require_each_included_type = true
-  exclude_punctuation = true
-  include_space = false
-}
-
-resource "terraform_data" "secret_uuid" {
-  input = uuid()
-}
-
-resource "aws_secretsmanager_secret" "secret" {
-  name = "${local.db_secret_name}-${terraform_data.secret_uuid.output}"
-
-  tags = {
-    Name = local.db_secret_name
-  }
-}
-
-resource "aws_secretsmanager_secret_version" "secret_version" {
-  secret_id = aws_secretsmanager_secret.secret.id
-  secret_string_wo = ephemeral.aws_secretsmanager_random_password.password.random_password
-  secret_string_wo_version = 2
-}
-
 resource "aws_db_instance" "db" {
-  instance_class = "db.m5.large"
+  instance_class = "db.t3.micro"
   engine = "postgres"
   engine_version = "17.6"
   identifier = local.db_name
+  multi_az = false
   db_name = "masterdetails"
   db_subnet_group_name = aws_db_subnet_group.subnet_group.name
   username = "masterdetails"
-  password_wo = ephemeral.aws_secretsmanager_random_password.password.random_password
-  password_wo_version = 4
+  manage_master_user_password = true
   vpc_security_group_ids = [aws_security_group.sg_postgres_ingress.id]
-  skip_final_snapshot = true
+  skip_final_snapshot = false
+  final_snapshot_identifier = "${local.db_name}-snapshot"
   allocated_storage = 10
   max_allocated_storage = 100
 }
@@ -223,7 +274,7 @@ data "aws_iam_policy_document" "masterdetails_deploy_role" {
     ]
 
     resources = [
-      aws_secretsmanager_secret.secret.arn
+      aws_db_instance.db.master_user_secret[0].secret_arn
     ]
   }
 }
@@ -263,6 +314,8 @@ resource "aws_elasticache_serverless_cache" "cache" {
 resource "aws_apprunner_vpc_connector" "apprunner_vpc" {
   security_groups = [
     aws_security_group.sg_https_ingress.id,
+    aws_security_group.sg_http_ingress.id,
+    aws_security_group.sg_https_egress.id,
     aws_security_group.sg_postgres_egress.id,
     aws_security_group.sg_redis_egress.id
   ]
@@ -287,7 +340,10 @@ resource "aws_apprunner_auto_scaling_configuration_version" "auto_scaling" {
 }
 
 resource "aws_apprunner_service" "service" {
-  depends_on = [time_sleep.deploy_wait_10s]
+  depends_on = [
+    time_sleep.deploy_wait_10s,
+    aws_vpc_endpoint.secretsmanager_endpoint
+  ]
 
   service_name = local.service_name
   auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.auto_scaling.arn
@@ -303,13 +359,11 @@ resource "aws_apprunner_service" "service" {
       image_configuration {
         port = "8080"
 
-        runtime_environment_secrets = {
-          PGSQL_PASSWORD = aws_secretsmanager_secret.secret.arn
-        }
-
         runtime_environment_variables = {
+          AWS_PGSQL_SECRET = aws_db_instance.db.master_user_secret[0].secret_arn
           PGSQL_HOSTNAME = aws_db_instance.db.address
-          PGSQL_USERNAME = aws_db_instance.db.username
+          PGSQL_PORT = aws_db_instance.db.port
+          PGSQL_DATABASE = aws_db_instance.db.db_name
           REDIS_HOSTNAME = aws_elasticache_serverless_cache.cache.endpoint[0].address
           REDIS_PORT = aws_elasticache_serverless_cache.cache.endpoint[0].port
           REDIS_USE_SSL = true
