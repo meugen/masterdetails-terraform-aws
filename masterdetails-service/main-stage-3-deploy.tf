@@ -219,8 +219,8 @@ resource "aws_db_instance" "db" {
   vpc_security_group_ids      = [aws_security_group.sg_postgres_ingress.id]
   skip_final_snapshot         = false
   final_snapshot_identifier   = "${local.db_name}-snapshot-${terraform_data.db_snapshot_uuid.output}"
-  allocated_storage           = 1
-  max_allocated_storage       = 10
+  allocated_storage           = 10
+  max_allocated_storage       = 50
 }
 
 data "aws_iam_policy_document" "assume_deploy_role" {
