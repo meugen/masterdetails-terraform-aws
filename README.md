@@ -6,7 +6,7 @@
 * masterdetails-terraform-aws - terraform implementation to apply infrastructure at AWS **You are here**
 
 ### Uses technologies:
-* Spring Boot 3.5.7
+* Spring Boot 4.0.5
 * Spring Validations
 * Spring Data JPA
 * Hibernate ORM
